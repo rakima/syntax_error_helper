@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk
 
 from .model import AnalysisResult
@@ -8,9 +9,27 @@ from .service import SyntaxAnalyzerService
 class LineNumberedEditor(ttk.Frame):
     def __init__(self, master: tk.Misc) -> None:
         super().__init__(master)
-        self.line_numbers = tk.Text(self, width=5, padx=4, takefocus=False, border=0,
-                                    background="#f0f0f0", foreground="#666666", state="disabled")
-        self.text = tk.Text(self, wrap="none", undo=True, font=("Consolas", 11))
+        self.editor_font = tkfont.Font(family="Consolas", size=11)
+        shared_layout = {
+            "font": self.editor_font,
+            "borderwidth": 0,
+            "highlightthickness": 0,
+            "spacing1": 0,
+            "spacing2": 0,
+            "spacing3": 0,
+        }
+        self.line_numbers = tk.Text(
+            self,
+            width=5,
+            padx=4,
+            takefocus=False,
+            wrap="none",
+            background="#f0f0f0",
+            foreground="#666666",
+            state="disabled",
+            **shared_layout,
+        )
+        self.text = tk.Text(self, wrap="none", undo=True, **shared_layout)
         vertical = ttk.Scrollbar(self, orient="vertical", command=self._scroll_both)
         horizontal = ttk.Scrollbar(self, orient="horizontal", command=self.text.xview)
         self.text.configure(yscrollcommand=lambda first, last: self._on_scroll(vertical, first, last),
