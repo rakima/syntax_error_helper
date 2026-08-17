@@ -9,6 +9,9 @@ from .model import AnalysisResult
 from .service import SyntaxAnalyzerService
 
 
+RESULT_SEPARATOR = "─" * 20
+
+
 class LineNumberedEditor(ttk.Frame):
     def __init__(self, master: tk.Misc) -> None:
         super().__init__(master)
@@ -98,8 +101,8 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("構文エラー解析ツール")
-        self.geometry("1000x720")
-        self.minsize(720, 520)
+        self.geometry("1200x720")
+        self.minsize(900, 520)
         self.service = SyntaxAnalyzerService()
         self._build_ui()
 
@@ -117,7 +120,7 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         self.status = tk.StringVar(value="対応ファイルをエディタへドラッグ＆ドロップして読み込めます。")
         ttk.Label(self, textvariable=self.status, foreground="#555555", padding=(10, 0, 10, 6)).pack(fill="x")
 
-        pane = ttk.Panedwindow(self, orient="vertical")
+        pane = ttk.Panedwindow(self, orient="horizontal")
         pane.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         editor_frame = ttk.LabelFrame(pane, text="ソースコード", padding=4)
         self.editor = LineNumberedEditor(editor_frame)
@@ -128,8 +131,26 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         pane.add(editor_frame, weight=3)
 
         result_frame = ttk.LabelFrame(pane, text="解析結果・修正候補", padding=4)
-        self.result = tk.Text(result_frame, wrap="word", height=12, state="disabled",
+        self.result = tk.Text(result_frame, wrap="word", width=42, state="disabled",
                               background="#fafafa", font=("Yu Gothic UI", 10))
+        self.result.tag_configure(
+            "analysis",
+            background="#ffe8e8",
+            lmargin1=6,
+            lmargin2=6,
+            rmargin=6,
+            spacing1=4,
+            spacing3=4,
+        )
+        self.result.tag_configure(
+            "suggestion",
+            background="#e8f5e9",
+            lmargin1=6,
+            lmargin2=6,
+            rmargin=6,
+            spacing1=4,
+            spacing3=4,
+        )
         result_scroll = ttk.Scrollbar(result_frame, orient="vertical", command=self.result.yview)
         self.result.configure(yscrollcommand=result_scroll.set)
         self.result.pack(side="left", fill="both", expand=True)
@@ -162,15 +183,17 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
     def _analyze(self) -> None:
         results = self.service.analyze(self.language.get(), self.editor.get())
         self.editor.highlight(results)
-        if results:
-            content = "\n\n" + ("\n\n" + "─" * 40 + "\n\n").join(
-                result.to_japanese_text() for result in results
-            )
-        else:
-            content = "構文エラー候補は見つかりませんでした。"
         self.result.configure(state="normal")
         self.result.delete("1.0", "end")
-        self.result.insert("1.0", content.strip())
+        if not results:
+            self.result.insert("1.0", "構文エラー候補は見つかりませんでした。")
+        else:
+            for index, result in enumerate(results):
+                if index:
+                    self.result.insert("end", f"\n{RESULT_SEPARATOR}\n\n")
+                self.result.insert("end", result.analysis_text() + "\n", "analysis")
+                self.result.insert("end", "\n")
+                self.result.insert("end", result.suggestion_text() + "\n", "suggestion")
         self.result.configure(state="disabled")
 
 
