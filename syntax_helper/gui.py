@@ -98,8 +98,8 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("構文エラー解析ツール")
-        self.geometry("1000x720")
-        self.minsize(720, 520)
+        self.geometry("1200x720")
+        self.minsize(900, 520)
         self.service = SyntaxAnalyzerService()
         self._build_ui()
 
@@ -117,7 +117,7 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         self.status = tk.StringVar(value="対応ファイルをエディタへドラッグ＆ドロップして読み込めます。")
         ttk.Label(self, textvariable=self.status, foreground="#555555", padding=(10, 0, 10, 6)).pack(fill="x")
 
-        pane = ttk.Panedwindow(self, orient="vertical")
+        pane = ttk.Panedwindow(self, orient="horizontal")
         pane.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         editor_frame = ttk.LabelFrame(pane, text="ソースコード", padding=4)
         self.editor = LineNumberedEditor(editor_frame)
@@ -128,7 +128,7 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         pane.add(editor_frame, weight=3)
 
         result_frame = ttk.LabelFrame(pane, text="解析結果・修正候補", padding=4)
-        self.result = tk.Text(result_frame, wrap="word", height=12, state="disabled",
+        self.result = tk.Text(result_frame, wrap="word", width=42, state="disabled",
                               background="#fafafa", font=("Yu Gothic UI", 10))
         result_scroll = ttk.Scrollbar(result_frame, orient="vertical", command=self.result.yview)
         self.result.configure(yscrollcommand=result_scroll.set)
