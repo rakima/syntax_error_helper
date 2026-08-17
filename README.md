@@ -1,5 +1,7 @@
 # 構文エラー解析ツール
 
+![構文エラー解析ツールのデモ](image/01_demo.png)
+
 [![Tests](https://github.com/rakima/syntax_error_helper/actions/workflows/test.yml/badge.svg)](https://github.com/rakima/syntax_error_helper/actions/workflows/test.yml)
 
 プログラミング初心者が構文エラーの原因候補と直し方を、日本語で確認するためのデスクトップGUIツールです。パーサーが停止した行だけでなく、未閉鎖の括弧や直前行のセミコロン不足など、**実際の原因になった可能性が高い行**を推定して表示します。
@@ -51,6 +53,7 @@ python main.py
 ドロップできる拡張子は `.c`、`.h`、`.java`、`.py`、`.json` です。ドロップ時は拡張子に合わせて言語が自動選択されます。UTF-8とCP932、2 MB以下のファイルに対応します。複数ファイルを同時にドロップした場合は最初の1ファイルを読み込みます。
 
 すぐに動作を確認したい場合は、[`examples`](examples/README.md) にある各言語の正常例とエラー例をGUIへ貼り付けてください。
+
 
 ## テスト
 
