@@ -1,6 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+import tkinter.font as tkfont
+from tkinter import messagebox, ttk
 
+from tkinterdnd2 import DND_FILES, TkinterDnD
+
+from .file_loader import SourceFileError, load_source_file
 from .model import AnalysisResult
 from .service import SyntaxAnalyzerService
 
@@ -8,9 +12,27 @@ from .service import SyntaxAnalyzerService
 class LineNumberedEditor(ttk.Frame):
     def __init__(self, master: tk.Misc) -> None:
         super().__init__(master)
-        self.line_numbers = tk.Text(self, width=5, padx=4, takefocus=False, border=0,
-                                    background="#f0f0f0", foreground="#666666", state="disabled")
-        self.text = tk.Text(self, wrap="none", undo=True, font=("Consolas", 11))
+        self.editor_font = tkfont.Font(family="Consolas", size=11)
+        shared_layout = {
+            "font": self.editor_font,
+            "borderwidth": 0,
+            "highlightthickness": 0,
+            "spacing1": 0,
+            "spacing2": 0,
+            "spacing3": 0,
+        }
+        self.line_numbers = tk.Text(
+            self,
+            width=5,
+            padx=4,
+            takefocus=False,
+            wrap="none",
+            background="#f0f0f0",
+            foreground="#666666",
+            state="disabled",
+            **shared_layout,
+        )
+        self.text = tk.Text(self, wrap="none", undo=True, **shared_layout)
         vertical = ttk.Scrollbar(self, orient="vertical", command=self._scroll_both)
         horizontal = ttk.Scrollbar(self, orient="horizontal", command=self.text.xview)
         self.text.configure(yscrollcommand=lambda first, last: self._on_scroll(vertical, first, last),
@@ -51,6 +73,14 @@ class LineNumberedEditor(ttk.Frame):
     def get(self) -> str:
         return self.text.get("1.0", "end-1c")
 
+    def set_content(self, source: str) -> None:
+        self.text.tag_remove("error", "1.0", "end")
+        self.text.tag_remove("suspected", "1.0", "end")
+        self.text.delete("1.0", "end")
+        self.text.insert("1.0", source)
+        self.text.edit_modified(False)
+        self.update_line_numbers()
+
     def highlight(self, results: list[AnalysisResult]) -> None:
         self.text.tag_remove("error", "1.0", "end")
         self.text.tag_remove("suspected", "1.0", "end")
@@ -64,7 +94,7 @@ class LineNumberedEditor(ttk.Frame):
             self.text.tag_add(tag, f"{line}.0", f"{line}.end+1c")
 
 
-class SyntaxErrorHelperApp(tk.Tk):
+class SyntaxErrorHelperApp(TkinterDnD.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.title("構文エラー解析ツール")
@@ -84,11 +114,17 @@ class SyntaxErrorHelperApp(tk.Tk):
         ttk.Button(toolbar, text="解析", command=self._analyze).pack(side="left")
         ttk.Label(toolbar, text="入力コードは実行されません。", foreground="#666666").pack(side="right")
 
+        self.status = tk.StringVar(value="対応ファイルをエディタへドラッグ＆ドロップして読み込めます。")
+        ttk.Label(self, textvariable=self.status, foreground="#555555", padding=(10, 0, 10, 6)).pack(fill="x")
+
         pane = ttk.Panedwindow(self, orient="vertical")
         pane.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         editor_frame = ttk.LabelFrame(pane, text="ソースコード", padding=4)
         self.editor = LineNumberedEditor(editor_frame)
         self.editor.pack(fill="both", expand=True)
+        for drop_target in (self.editor.text, self.editor.line_numbers):
+            drop_target.drop_target_register(DND_FILES)
+            drop_target.dnd_bind("<<Drop>>", self._on_file_drop)
         pane.add(editor_frame, weight=3)
 
         result_frame = ttk.LabelFrame(pane, text="解析結果・修正候補", padding=4)
@@ -99,6 +135,29 @@ class SyntaxErrorHelperApp(tk.Tk):
         self.result.pack(side="left", fill="both", expand=True)
         result_scroll.pack(side="right", fill="y")
         pane.add(result_frame, weight=2)
+
+    def _on_file_drop(self, event: tk.Event) -> str:
+        paths = self.tk.splitlist(event.data)
+        if not paths:
+            return event.action
+        try:
+            loaded = load_source_file(paths[0])
+        except (OSError, SourceFileError) as error:
+            messagebox.showerror("ファイルを読み込めません", str(error), parent=self)
+            return event.action
+
+        self.editor.set_content(loaded.source)
+        self.language.set(loaded.language)
+        self.editor.text.focus_set()
+        suffix = "（最初の1ファイルを読み込みました）" if len(paths) > 1 else ""
+        self.status.set(f"{loaded.path.name} を読み込みました。{suffix}")
+        self._clear_results()
+        return event.action
+
+    def _clear_results(self) -> None:
+        self.result.configure(state="normal")
+        self.result.delete("1.0", "end")
+        self.result.configure(state="disabled")
 
     def _analyze(self) -> None:
         results = self.service.analyze(self.language.get(), self.editor.get())
