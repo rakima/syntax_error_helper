@@ -1,0 +1,9 @@
+{
+  "name": "初心者向けサンプル",
+  "enabled": true,
+  "languages": ["C", "Java", "Python", "JSON"],
+  "settings": {
+    "highlight": true,
+    "maxCandidates": 5
+  }
+}
