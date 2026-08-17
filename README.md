@@ -1,5 +1,7 @@
 # 構文エラー解析ツール
 
+[![Tests](https://github.com/rakima/syntax_error_helper/actions/workflows/test.yml/badge.svg)](https://github.com/rakima/syntax_error_helper/actions/workflows/test.yml)
+
 プログラミング初心者が構文エラーの原因候補と直し方を、日本語で確認するためのデスクトップGUIツールです。パーサーが停止した行だけでなく、未閉鎖の括弧や直前行のセミコロン不足など、**実際の原因になった可能性が高い行**を推定して表示します。
 
 ## 対応言語
