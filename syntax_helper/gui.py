@@ -9,6 +9,9 @@ from .model import AnalysisResult
 from .service import SyntaxAnalyzerService
 
 
+RESULT_SEPARATOR = "─" * 20
+
+
 class LineNumberedEditor(ttk.Frame):
     def __init__(self, master: tk.Misc) -> None:
         super().__init__(master)
@@ -163,7 +166,7 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         results = self.service.analyze(self.language.get(), self.editor.get())
         self.editor.highlight(results)
         if results:
-            content = "\n\n" + ("\n\n" + "─" * 40 + "\n\n").join(
+            content = "\n\n" + ("\n\n" + RESULT_SEPARATOR + "\n\n").join(
                 result.to_japanese_text() for result in results
             )
         else:
