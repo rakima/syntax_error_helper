@@ -133,6 +133,24 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
         result_frame = ttk.LabelFrame(pane, text="解析結果・修正候補", padding=4)
         self.result = tk.Text(result_frame, wrap="word", width=42, state="disabled",
                               background="#fafafa", font=("Yu Gothic UI", 10))
+        self.result.tag_configure(
+            "analysis",
+            background="#ffe8e8",
+            lmargin1=6,
+            lmargin2=6,
+            rmargin=6,
+            spacing1=4,
+            spacing3=4,
+        )
+        self.result.tag_configure(
+            "suggestion",
+            background="#e8f5e9",
+            lmargin1=6,
+            lmargin2=6,
+            rmargin=6,
+            spacing1=4,
+            spacing3=4,
+        )
         result_scroll = ttk.Scrollbar(result_frame, orient="vertical", command=self.result.yview)
         self.result.configure(yscrollcommand=result_scroll.set)
         self.result.pack(side="left", fill="both", expand=True)
@@ -165,15 +183,17 @@ class SyntaxErrorHelperApp(TkinterDnD.Tk):
     def _analyze(self) -> None:
         results = self.service.analyze(self.language.get(), self.editor.get())
         self.editor.highlight(results)
-        if results:
-            content = "\n\n" + ("\n\n" + RESULT_SEPARATOR + "\n\n").join(
-                result.to_japanese_text() for result in results
-            )
-        else:
-            content = "構文エラー候補は見つかりませんでした。"
         self.result.configure(state="normal")
         self.result.delete("1.0", "end")
-        self.result.insert("1.0", content.strip())
+        if not results:
+            self.result.insert("1.0", "構文エラー候補は見つかりませんでした。")
+        else:
+            for index, result in enumerate(results):
+                if index:
+                    self.result.insert("end", f"\n{RESULT_SEPARATOR}\n\n")
+                self.result.insert("end", result.analysis_text() + "\n", "analysis")
+                self.result.insert("end", "\n")
+                self.result.insert("end", result.suggestion_text() + "\n", "suggestion")
         self.result.configure(state="disabled")
 
 
