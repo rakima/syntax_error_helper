@@ -67,6 +67,17 @@ python -m unittest discover -v
 
 正常コード、典型的エラー、原因行と発覚行が異なるケース、コメント・文字列内の括弧、ネスト、複数候補をテストしています。
 
+## Windows配布版のビルド
+
+開発用依存パッケージをインストールし、PowerShellスクリプトを実行します。
+
+```powershell
+python -m pip install -r build-requirements.txt
+.\build.ps1
+```
+
+`dist`フォルダーにWindows向け実行ファイルを含む配布フォルダーと、BOOTHへ登録できるZIPファイルが生成されます。購入者はPythonや追加パッケージをインストールする必要がありません。
+
 ## 注意事項
 
 - 原因位置と修正候補は簡易構造解析とヒューリスティックによる**推定**であり、100%正しいとは限りません。
